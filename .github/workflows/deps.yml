@@ -1,9 +1,9 @@
 name: Dependencies
 
 on:
-  workflow_run:
-    workflows: ["CI"]
-    types: [completed]
+  schedule:
+    - cron: "0 13 * * 1"
+  workflow_dispatch:
 
 jobs:
   act:
