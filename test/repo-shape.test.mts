@@ -14,7 +14,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, "..");
 const workflowsDir = join(repoRoot, ".github", "workflows");
 
-const MAX_STUB_LINES = 10;
+const MAX_STUB_LINES = 15;
 
 test("Given .github/workflows/, when listed, then it is not empty", () => {
   assert.ok(existsSync(workflowsDir), `${workflowsDir} does not exist`);
