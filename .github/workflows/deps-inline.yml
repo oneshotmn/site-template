@@ -18,8 +18,24 @@ on:
       app-private-key:
         required: true
 
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: deps-${{ github.workflow_ref }}
+  cancel-in-progress: false
+
 jobs:
   act:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - run: echo hi
+      - name: Mint the app token
+        id: app
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ secrets.app-id }}
+          private-key: ${{ secrets.app-private-key }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name || github.repository }}
