@@ -1,0 +1,40 @@
+# Substitutable tokens: __FLY_APP__, __FLY_REGION__ (default ord). The
+# provisioner replaces these; nothing here is a secret.
+app = "__FLY_APP__"
+primary_region = "__FLY_REGION__"
+
+[build]
+
+[env]
+  PORT = "8080"
+
+[[mounts]]
+  source = "__FLY_APP___uploads"
+  destination = "/var/www/html/wp-content/uploads"
+
+[[services]]
+  internal_port = 8080
+  protocol = "tcp"
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+    force_https = true
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+
+  [[services.http_checks]]
+    interval = "15s"
+    timeout = "5s"
+    grace_period = "30s"
+    method = "get"
+    path = "/"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

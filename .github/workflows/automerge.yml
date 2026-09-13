@@ -1,0 +1,11 @@
+name: Automerge
+
+on:
+  workflow_run: { workflows: ["CI"], types: [completed] }
+
+jobs:
+  act:
+    uses: oneshotmn/.github/.github/workflows/automerge.yml@main
+    secrets:
+      app-id: ${{ secrets.ONESHOT_PR_APP_ID }}
+      app-private-key: ${{ secrets.ONESHOT_PR_PRIVATE_KEY }}

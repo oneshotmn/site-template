@@ -1,0 +1,19 @@
+{
+  "name": "@oneshotmn/site-template",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Structure-only WordPress site template. No logic — see README.md.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test:unit": "THEME_CONTRACT_THEME_GLOB=theme/oneshot-block-theme THEME_CONTRACT_SRC_DIR=theme/oneshot-block-theme/src node --test \"test/*.test.mts\" \"theme/oneshot-block-theme/test/*.test.mts\"",
+    "test": "npm run test:unit",
+    "export:theme": "node scripts/export-theme.mts"
+  },
+  "devDependencies": {
+    "@google/design.md": "0.4.0",
+    "yaml": "^2.5.0"
+  }
+}

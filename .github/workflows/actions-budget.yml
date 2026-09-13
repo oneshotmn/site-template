@@ -1,0 +1,12 @@
+name: Actions budget
+
+on:
+  schedule:
+    - cron: "0 14 1 * *"
+
+jobs:
+  budget:
+    uses: oneshotmn/.github/.github/workflows/actions-budget.yml@main
+    with: { org: oneshotmn }
+    secrets:
+      budget-token: ${{ secrets.BUDGET_TOKEN }}

@@ -1,0 +1,12 @@
+name: Token health
+
+on:
+  schedule:
+    - cron: "0 12 * * *"
+
+jobs:
+  check:
+    uses: oneshotmn/.github/.github/workflows/token-health.yml@main
+    secrets:
+      app-id: ${{ secrets.ONESHOT_PR_APP_ID }}
+      app-private-key: ${{ secrets.ONESHOT_PR_PRIVATE_KEY }}

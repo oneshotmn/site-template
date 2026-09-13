@@ -1,0 +1,60 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/theme.json",
+  "version": 3,
+  "settings": {
+    "color": {
+      "palette": [
+        { "slug": "surface", "name": "Surface", "color": "var(--wp--custom--color--surface)" },
+        { "slug": "surface-raised", "name": "Surface Raised", "color": "var(--wp--custom--color--surface-raised)" },
+        { "slug": "text", "name": "Text", "color": "var(--wp--custom--color--text)" },
+        { "slug": "text-body", "name": "Text Body", "color": "var(--wp--custom--color--text-body)" },
+        { "slug": "primary", "name": "Primary", "color": "var(--wp--custom--color--primary)" },
+        { "slug": "accent", "name": "Accent", "color": "var(--wp--custom--color--accent)" },
+        { "slug": "line", "name": "Line", "color": "var(--wp--custom--color--line)" }
+      ],
+      "custom": true,
+      "customDuotone": false,
+      "customGradient": false
+    },
+    "typography": {
+      "fontFamilies": [
+        { "slug": "body", "name": "Body", "fontFamily": "var(--wp--custom--font--body)" },
+        { "slug": "heading", "name": "Heading", "fontFamily": "var(--wp--custom--font--heading)" }
+      ]
+    },
+    "layout": {
+      "contentSize": "720px",
+      "wideSize": "1080px"
+    }
+  },
+  "styles": {
+    "color": {
+      "background": "var(--wp--custom--color--surface)",
+      "text": "var(--wp--custom--color--text-body)"
+    },
+    "typography": {
+      "fontFamily": "var(--wp--custom--font--body)"
+    },
+    "elements": {
+      "link": {
+        "color": {
+          "text": "var(--wp--custom--color--primary)"
+        }
+      },
+      "h1": {
+        "typography": {
+          "fontFamily": "var(--wp--custom--font--heading)"
+        }
+      },
+      "h2": {
+        "typography": {
+          "fontFamily": "var(--wp--custom--font--heading)"
+        }
+      }
+    }
+  },
+  "templateParts": [
+    { "name": "header", "title": "Header", "area": "header" },
+    { "name": "footer", "title": "Footer", "area": "footer" }
+  ]
+}

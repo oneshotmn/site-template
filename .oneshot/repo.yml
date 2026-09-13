@@ -1,0 +1,10 @@
+# Substitutable tokens: __ORG_SLUG__, __ORG_NAME__, __FLY_APP__, __DOMAIN__,
+# __THEME_TOKENS__. The provisioner replaces every one of these; nothing
+# below this file is read at runtime by WordPress itself — it is metadata
+# for tooling (the provisioner, doctor scripts, humans).
+org_slug: __ORG_SLUG__
+org_name: __ORG_NAME__
+stack: wordpress
+fly_app: __FLY_APP__
+domain: __DOMAIN__
+theme_tokens: __THEME_TOKENS__

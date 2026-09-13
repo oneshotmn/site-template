@@ -1,0 +1,11 @@
+name: Production deploy
+
+on: workflow_dispatch
+
+jobs:
+  deploy:
+    uses: oneshotmn/.github/.github/workflows/production-deploy.yml@main
+    with:
+      promote-command: "echo not wired for this template yet"
+    secrets:
+      deploy-token: ${{ secrets.FLY_API_TOKEN }}
