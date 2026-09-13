@@ -1,6 +1,0 @@
-name: DepsMin
-on: workflow_dispatch
-jobs:
-  act:
-    uses: oneshotmn/.github/.github/workflows/deps.yml@main
-    secrets: inherit
