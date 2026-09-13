@@ -1,12 +1,11 @@
 name: TrigTest
 
 on:
-  schedule:
-    - cron: "0 13 * * 1"
   workflow_dispatch:
 
 jobs:
   act:
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo hi
+    uses: oneshotmn/.github/.github/workflows/deps.yml@main
+    secrets:
+      app-id: ${{ secrets.ONESHOT_PR_APP_ID }}
+      app-private-key: ${{ secrets.ONESHOT_PR_PRIVATE_KEY }}
