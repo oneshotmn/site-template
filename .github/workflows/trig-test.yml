@@ -7,4 +7,6 @@ on:
 
 jobs:
   act:
-    runs-on: ubuntu-...[truncated]
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo hi
