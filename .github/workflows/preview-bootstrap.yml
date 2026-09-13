@@ -6,6 +6,7 @@ jobs:
   bootstrap:
     uses: oneshotmn/.github/.github/workflows/preview-bootstrap.yml@main
     with:
+      build-command: ""
       bootstrap-command: "flyctl apps create $(grep fly_app .oneshot/repo.yml | cut -d' ' -f2) || true"
     secrets:
       deploy-token: ${{ secrets.FLY_API_TOKEN }}

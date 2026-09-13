@@ -11,6 +11,7 @@ jobs:
   preview:
     uses: oneshotmn/.github/.github/workflows/preview.yml@main
     with:
+      build-command: ""
       deploy-command: "flyctl deploy --app $(grep fly_app .oneshot/repo.yml | cut -d' ' -f2) --remote-only && echo https://$(grep fly_app .oneshot/repo.yml | cut -d' ' -f2).fly.dev > \"$PREVIEW_URL_FILE\""
     secrets:
       deploy-token: ${{ secrets.FLY_API_TOKEN }}
