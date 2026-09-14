@@ -18,6 +18,18 @@ define('DB_HOST', oneshot_env('WORDPRESS_DB_HOST', 'localhost'));
 define('DB_CHARSET', 'utf8mb4');
 define('DB_COLLATE', '');
 
+// No external database server: the SQLite Database Integration drop-in
+// (baked into the image at build time — see Dockerfile) stores everything
+// in one file, placed inside the ONE volume this app already mounts
+// (wp-content/uploads) so the database survives a Machine restart without
+// a second Fly volume. Skipped when a real WORDPRESS_DB_HOST is set, so a
+// future move to managed MySQL is a config change, not a code one.
+if (!oneshot_env('WORDPRESS_DB_HOST')) {
+    define('DB_DIR', '/var/www/html/wp-content/uploads/database/');
+    define('DB_FILE', '.ht.sqlite');
+}
+
+
 $auth_keys = [
     'AUTH_KEY', 'SECURE_AUTH_KEY', 'LOGGED_IN_KEY', 'NONCE_KEY',
     'AUTH_SALT', 'SECURE_AUTH_SALT', 'LOGGED_IN_SALT', 'NONCE_SALT',
