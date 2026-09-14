@@ -9,7 +9,12 @@ primary_region = "__FLY_REGION__"
   PORT = "8080"
 
 [[mounts]]
-  source = "__FLY_APP___uploads"
+  # Fly volume names allow only lowercase letters, digits and underscores, so
+# an app-derived name breaks the moment the app has a hyphen in it
+# (oneshot-help_uploads was rejected on live run 34802841834). Volume names
+# are scoped per app, so a fixed name is unambiguous and always valid - and
+# it matches the volume step_ensure_volume creates.
+  source = "wp_uploads"
   destination = "/var/www/html/wp-content/uploads"
 
 [[services]]
