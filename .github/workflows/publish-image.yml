@@ -1,0 +1,27 @@
+name: Publish site image
+
+# Builds this template's Dockerfile ONCE and pushes it to the Fly registry.
+# Provisioning a new site then only DEPLOYS that prebuilt image, which is
+# what keeps a respin near-instant: image build time never sits in the
+# provisioning path.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - Dockerfile
+      - entrypoint.sh
+      - nginx.conf
+      - supervisord.conf
+      - wp-config.php
+      - theme/**
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    uses: oneshotmn/.github/.github/workflows/publish-image.yml@main
+    secrets:
+      fly-api-token: ${{ secrets.FLY_API_TOKEN }}
