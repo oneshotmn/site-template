@@ -9,7 +9,17 @@
 FROM wordpress:php8.3-apache
 
 # wp-cli: not part of the stock image; used by our entrypoint to run the
-# self-install non-interactively.
+# self-install non-interactively. wp-cli's `wp db *` subcommands (used by
+# our entrypoint to wait for DB connectivity) shell out to the mysql/
+# mysqlcheck client binaries directly rather than going through PHP's
+# mysqli extension — and the stock wordpress image does NOT ship a MySQL
+# client, only the PHP driver. Without default-mysql-client, `wp db check`
+# fails immediately with "mysqlcheck: No such file or directory" and the
+# self-install can never even reach the "waiting for database" retry loop.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends default-mysql-client \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN curl -fsSL -o /usr/local/bin/wp \
       https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar \
     && chmod +x /usr/local/bin/wp
