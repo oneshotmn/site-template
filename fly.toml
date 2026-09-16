@@ -5,26 +5,14 @@ primary_region = "__FLY_REGION__"
 
 [build]
 
-[env]
-  PORT = "8080"
-
 [[mounts]]
-  # Fly volume names allow only lowercase letters, digits and underscores, so
-# an app-derived name breaks the moment the app has a hyphen in it
-# (oneshot-help_uploads was rejected on live run 34802841834). Volume names
-# are scoped per app, so a fixed name is unambiguous and always valid - and
-# it matches the volume step_ensure_volume creates.
   source = "wp_uploads"
   destination = "/var/www/html/wp-content/uploads"
 
 [[services]]
-  internal_port = 8080
+  internal_port = 80
   protocol = "tcp"
-  # A site people click must not be asleep. Auto-stop plus zero minimum
-  # machines meant the Machine shut down after a few idle minutes and the
-  # URL went dead (Brian clicked a "live" link and got nothing). Cold-start
-  # on wake is also too slow to pass for a working site.
-  auto_stop_machines = "off"
+  auto_stop_machines = "stop"
   auto_start_machines = true
   min_machines_running = 1
 
@@ -37,12 +25,19 @@ primary_region = "__FLY_REGION__"
     port = 443
     handlers = ["tls", "http"]
 
-  [[services.http_checks]]
+  # A plain http_check on "/" is unusable here: WordPress + force_https
+  # answers "/" over plain HTTP with a 301 redirect, which a naive check
+  # treats as unhealthy, which makes the Fly proxy refuse to route at all
+  # ("could not find a good candidate within 40 attempts"). A TCP check
+  # only proves Apache is accepting connections on port 80, which is true
+  # the moment the container boots (self-install runs before Apache's
+  # foreground exec in our entrypoint, but Apache itself is reachable
+  # quickly and always answers something) — this is what avoids the
+  # previous run's total routing failure.
+  [[services.tcp_checks]]
     interval = "15s"
     timeout = "5s"
     grace_period = "30s"
-    method = "get"
-    path = "/"
 
 [[vm]]
   size = "shared-cpu-1x"

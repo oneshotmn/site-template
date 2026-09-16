@@ -1,59 +1,33 @@
-# WordPress + PHP-FPM + nginx, single image, multi-arch (builds natively on
-# Apple Silicon and on the amd64 runners Fly uses — no QEMU emulation layer).
-# No secrets baked in: every credential and hostname arrives at runtime via
-# environment variables (see wp-config.php and entrypoint.sh).
-#
-# Self-installing, no external database server: the SQLite Database
-# Integration drop-in (WordPress Performance Team feature plugin, baked in
-# below at IMAGE BUILD time — never downloaded at container start) stores
-# WordPress's data in one file inside the volume this app already mounts
-# (wp-content/uploads), so a Machine boots with zero external dependency —
-# no DB to provision or wait on. This is an architecture choice made for
-# provisioning speed, traded against SQLite's single-writer limit; revisit
-# for a site with real concurrent-write traffic (see README.md).
+# Stock official WordPress image, unmodified apart from wp-cli and the
+# bundled theme. Deliberately NOT a hand-written wp-config.php: the stock
+# entrypoint (docker-entrypoint.sh) generates wp-config.php itself when
+# WORDPRESS_DB_* env vars are present, and per the image's own docs it adds
+# HTTP_X_FORWARDED_PROTO handling automatically — which is exactly what
+# makes is_ssl() work correctly behind Fly's TLS-terminating proxy. A
+# custom wp-config.php here previously caused an infinite HTTPS redirect
+# loop (ERR_TOO_MANY_REDIRECTS on /wp-login.php); never reintroduce one.
+FROM wordpress:php8.3-apache
 
-FROM wordpress:6.7-php8.3-fpm
-
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends nginx supervisor unzip \
-    && rm -rf /var/lib/apt/lists/*
-
-# wp-cli: the one tool entrypoint.sh uses to run the install non-interactively.
-RUN curl -fsSL -o /usr/local/bin/wp https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar \
+# wp-cli: not part of the stock image; used by our entrypoint to run the
+# self-install non-interactively.
+RUN curl -fsSL -o /usr/local/bin/wp \
+      https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar \
     && chmod +x /usr/local/bin/wp
 
-# SQLite Database Integration, downloaded from wordpress.org at IMAGE BUILD
-# time (never at container start): unpacked into wp-content/plugins and its
-# db.php drop-in generated from db.copy so WordPress picks it up on boot
-# with no runtime install step.
-RUN curl -fsSL -o /tmp/sqlite.zip https://downloads.wordpress.org/plugin/sqlite-database-integration.zip \
-    && mkdir -p /var/www/html/wp-content/plugins \
-    && unzip -q /tmp/sqlite.zip -d /var/www/html/wp-content/plugins \
-    && rm /tmp/sqlite.zip \
-    && sed \
-         -e "s#{SQLITE_IMPLEMENTATION_FOLDER_PATH}#/var/www/html/wp-content/plugins/sqlite-database-integration#g" \
-         -e "s#{SQLITE_PLUGIN}#sqlite-database-integration/load.php#g" \
-         /var/www/html/wp-content/plugins/sqlite-database-integration/db.copy \
-         > /var/www/html/wp-content/db.php
+# The bundled OneShot theme is NOT on wordpress.org, so it cannot be
+# fetched with `wp theme install`. It must be baked into the image and
+# activated with `wp theme activate` only. It is copied to
+# /usr/src/wordpress/wp-content/themes/ — the base image's seed directory —
+# NOT to /var/www/html, because the stock entrypoint copies
+# /usr/src/wordpress into /var/www/html on first boot (skipping files that
+# already exist there). Anything copied straight into /var/www/html would
+# be masked/ignored by that seeding step.
+COPY theme/oneshot-block-theme /usr/src/wordpress/wp-content/themes/oneshot-block-theme
 
-COPY nginx.conf /etc/nginx/nginx.conf
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-COPY wp-config.php /var/www/html/wp-config.php
-COPY entrypoint.sh /entrypoint.sh
-COPY theme/ /var/www/html/wp-content/themes/
+# Our boot-time self-install script; wraps the stock entrypoint rather
+# than replacing it.
+COPY docker-entrypoint-wrapper.sh /usr/local/bin/docker-entrypoint-wrapper.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint-wrapper.sh
 
-RUN chmod +x /entrypoint.sh \
-    && mkdir -p /var/www/html/wp-content/uploads /var/www/html/wp-content/uploads/database \
-    && chown -R www-data:www-data /var/www/html/wp-content
-
-# wp-content/uploads is the volume mount point (see fly.toml) — the only
-# directory this image expects to persist across deploys. The SQLite file
-# lives inside it (uploads/database/) so the database survives restarts on
-# the same one volume, with no second Fly volume needed.
-VOLUME ["/var/www/html/wp-content/uploads"]
-
-EXPOSE 8080
-
-ENTRYPOINT ["/entrypoint.sh"]
-CMD ["supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf", "-n"]
-
+ENTRYPOINT ["docker-entrypoint-wrapper.sh"]
+CMD ["apache2-foreground"]

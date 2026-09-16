@@ -19,10 +19,9 @@ triggers the first preview build.
 
 | Path | What |
 | --- | --- |
-| `Dockerfile` | WordPress + PHP-FPM + nginx, one multi-arch image, no baked-in secrets. |
-| `fly.toml` | Substitutable tokens (`__FLY_APP__`, `__FLY_REGION__`), a volume mount for `wp-content/uploads`. |
-| `nginx.conf`, `supervisord.conf`, `entrypoint.sh` | Process wiring. No stack-specific logic beyond running PHP-FPM + nginx. |
-| `wp-config.php` | Every value read from an environment variable. No secret is committed. |
+| `Dockerfile` | Stock `wordpress:php8.3-apache` image, unmodified apart from wp-cli and the bundled theme. No custom `wp-config.php` — the stock entrypoint generates one from `WORDPRESS_DB_*` env vars and correctly handles Fly's `X-Forwarded-Proto` reverse proxy. |
+| `fly.toml` | Substitutable tokens (`__FLY_APP__`, `__FLY_REGION__`), `internal_port = 80` (the stock image's Apache port), a TCP health check, a volume mount for `wp-content/uploads`. |
+| `docker-entrypoint-wrapper.sh` | Boot-time self-install: runs the stock entrypoint's setup pass, waits for the DB, runs `wp core install` idempotently (guarded by `wp core is-installed`) and activates the bundled theme, then execs the stock entrypoint in the foreground as PID 1. No sidecar container — this runs inside Fly's single container per app. |
 | `.oneshot/repo.yml` | Provisioner-owned metadata: `org_slug`, `org_name`, `stack`, `fly_app`, `domain`, `theme_tokens`. |
 | `theme/oneshot-block-theme/` | One block theme, bound to [`oneshot-theme`](https://github.com/oneshotmn/oneshot-theme)'s role-token contract. `DESIGN.md` is the only place a colour is named; `theme.json` and CSS reference roles only. |
 | `theme/oneshot-block-theme/test/theme-contract.test.mts` | Vendored from `oneshot-theme` — fails `npm test` on a raw hex literal or a retired token name. |
