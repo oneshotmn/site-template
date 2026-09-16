@@ -1,0 +1,103 @@
+name: Verify admin login (oneshot.help)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-login:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Playwright
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm install playwright@1.47.0 >/dev/null 2>&1
+          npx playwright install --with-deps chromium
+
+      - name: Verify admin login and capture dashboard
+        env:
+          WP_ADMIN_USER: admin
+          WP_ADMIN_PASSPHRASE: ${{ secrets.ONESHOT_HELP_ADMIN_PASSPHRASE }}
+        run: |
+          cat > verify.mjs <<'SCRIPT'
+          import { chromium } from 'playwright';
+
+          const url = 'https://oneshot.help/wp-login.php';
+          const user = process.env.WP_ADMIN_USER;
+          const pass = process.env.WP_ADMIN_PASSPHRASE;
+
+          if (!pass) {
+            console.error('WP_ADMIN_PASSPHRASE secret is not set');
+            process.exit(1);
+          }
+
+          const browser = await chromium.launch();
+          const page = await browser.newPage();
+
+          console.log('Navigating to', url);
+          const resp = await page.goto(url, { waitUntil: 'load', timeout: 30000 });
+          console.log('GET /wp-login.php status:', resp.status());
+          if (resp.status() !== 200) {
+            console.error('Expected 200 on wp-login.php, got', resp.status());
+            process.exit(1);
+          }
+
+          await page.fill('#user_login', user);
+          await page.fill('#user_pass', pass);
+          await Promise.all([
+            page.waitForNavigation({ waitUntil: 'load', timeout: 30000 }),
+            page.click('#wp-submit'),
+          ]);
+
+          const currentUrl = page.url();
+          console.log('Post-login URL:', currentUrl);
+          if (!currentUrl.includes('/wp-admin/')) {
+            console.error('Did not land on /wp-admin/ — login failed');
+            await page.screenshot({ path: 'failure.png', fullPage: true });
+            process.exit(1);
+          }
+
+          const bodyText = await page.textContent('body');
+          if (!bodyText.includes('Dashboard')) {
+            console.error('Dashboard text not found on landing page');
+            process.exit(1);
+          }
+          console.log('Dashboard text confirmed present');
+
+          // Confirm active theme via admin bar / appearance page
+          await page.goto('https://oneshot.help/wp-admin/themes.php', { waitUntil: 'load', timeout: 30000 });
+          const activeThemeText = await page.textContent('body');
+          const themeOk = activeThemeText.includes('oneshot-block-theme') || activeThemeText.toLowerCase().includes('oneshot');
+          console.log('Active theme check passed:', themeOk);
+          if (!themeOk) {
+            console.error('Could not confirm oneshot-block-theme is active');
+            await page.screenshot({ path: 'failure-theme.png', fullPage: true });
+            process.exit(1);
+          }
+
+          await page.goto('https://oneshot.help/wp-admin/', { waitUntil: 'load', timeout: 30000 });
+          await page.screenshot({ path: 'dashboard.png', fullPage: true });
+          console.log('Screenshot saved: dashboard.png');
+
+          await browser.close();
+          console.log('LOGIN_VERIFIED_OK');
+          SCRIPT
+          node verify.mjs
+
+      - name: Upload dashboard screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: oneshot-help-dashboard
+          path: |
+            dashboard.png
+            failure.png
+            failure-theme.png
+          if-no-files-found: ignore
